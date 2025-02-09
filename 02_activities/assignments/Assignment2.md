@@ -14,10 +14,10 @@
     * Open a private window in your browser. Copy and paste the link to your pull request into the address bar. Make sure you can see your pull request properly. This helps the technical facilitator and learning support staff review your submission easily.
 
 Checklist:
-- [ ] Create a branch called `assignment-two`.
-- [ ] Ensure that the repository is public.
-- [ ] Review [the PR description guidelines](https://github.com/UofT-DSI/onboarding/blob/main/onboarding_documents/submissions.md#guidelines-for-pull-request-descriptions) and adhere to them.
-- [ ] Verify that the link is accessible in a private browser window.
+- [x] Create a branch called `assignment-two`.
+- [x] Ensure that the repository is public.
+- [x] Review [the PR description guidelines](https://github.com/UofT-DSI/onboarding/blob/main/onboarding_documents/submissions.md#guidelines-for-pull-request-descriptions) and adhere to them.
+- [xxz] Verify that the link is accessible in a private browser window.
 
 If you encounter any difficulties or have questions, please don't hesitate to reach out to our team via our Slack at `#cohort-5-help`. Our Technical Facilitators and Learning Support staff are here to help you navigate any challenges.
 
@@ -53,9 +53,57 @@ The store wants to keep customer addresses. Propose two architectures for the CU
 
 **HINT:** search type 1 vs type 2 slowly changing dimensions. 
 
-```
-Your answer...
-```
+##### Type 1 SCD: Overwriting Changes
+When a change is made, the old data is overwritten with the new data. There’s no history tracking, and only the most recent version of the data is kept.
+
+CUSTOMER_ADDRESS Table (Type 1 SCD)
+Column Name	    Data Type	    Description
+address_id	    INT (PK)	    Unique identifier for the address (could be auto-generated).
+customer_id	    INT (FK)	    References customer_id from the Customer table.
+address_line1	VARCHAR(100)	The first line of the address (street address).
+address_line2	VARCHAR(100)	The second line of the address (optional).
+city	        VARCHAR(50)	    City of the address.
+state	        VARCHAR(50)	    State/Province of the address.
+postal_code	    VARCHAR(20)	    Postal/ZIP code of the address.
+country	        VARCHAR(50)	    Country of the address.
+is_current	    BOOLEAN	        Indicates if this is the current address (TRUE/FALSE).
+last_modified	DATETIME	    Timestamp of when the address was last updated.
+
+Explanation:
+Type 1 (Overwrite): When a customer changes their address, the old address is replaced by the new address. No new records are created. We simply overwrite the old address in place, maintaining the most recent address without tracking historical changes.
+`is_current`: This field could be used to track if the address is currently active. When the customer changes their address, the old address is set to `is_current` = FALSE, until the new address is overwrittem with `is_current` = TRUE, to mark the new address as the current address.
+`last_modified`: Tracks when the address was updated.
+
+Use Case for Type 1 (Overwrite):
+This model is ideal when the historical address data is not necessary (e.g., if you don't need to know the customer’s past addresses, just the current one). It simplifies data storage and management.
+
+##### Type 2 SCD: Retain Changes
+
+When you want to preserve the history of data. In this case, each change in the customer’s address is treated as a new record, and old records are retained for historical tracking.
+
+CUSTOMER_ADDRESS Table (Type 2 SCD)
+Column Name	    Data Type	    Description
+address_id	    INT (PK)	    Unique identifier for the address.
+customer_id	    INT (FK)	    References customer_id from the Customer table.
+address_line1	VARCHAR(100)	The first line of the address (street address).
+address_line2	VARCHAR(100)	The second line of the address (optional).
+city	        VARCHAR(50)	    City of the address.
+state	        VARCHAR(50)	    State/Province of the address.
+postal_code	    VARCHAR(20)	    Postal/ZIP code of the address.
+country	        VARCHAR(50)	    Country of the address.
+start_date	    DATETIME	    Date the address became active.
+end_date	    DATETIME	    Date the address was replaced or no longer valid (NULL if the address is current).
+is_current	    BOOLEAN	        Indicates if this is the current address (TRUE/FALSE).
+
+
+Explanation:
+Type 2 (Retain History): When a customer updates their address, a new record is inserted into the CUSTOMER_ADDRESS table. The start_date is set to the date the address became active, and the end_date is set when the address was superseded (for example, when a new address is added).
+`start_date`: This field indicates when the address became active for the customer.
+`end_date`: This field records when the address was replaced by a new one (it could be NULL for the current address).
+`is_current`: Tracks whether the address is the customer's current address.
+
+Use Case for Type 2 (Retain History):
+This model is useful when you need to retain the customer’s full address history, such as in cases where you need to analyze address changes over time (e.g., for shipping purposes, fraud detection, or to understand customer movements). Only one address will have `is_current` = TRUE, representing the most recent address. All previous addresses will have `is_current` = FALSE.
 
 ***
 
